@@ -29,9 +29,9 @@
 </style>
 </head>
 <body>
-<header>🐱 <select id="who"></select><small id="sub"></small></header>
+<header>🐱 チャチャ<small id="sub"></small></header>
 <div id="stage">
-<img id="cat" src="cat.png" alt="ミケ">
+<img id="cat" src="cat.png" alt="チャチャ">
 </div>
 <div id="controls">
   声: <select id="preset"></select>
@@ -41,30 +41,13 @@
 </div>
 <div id="log"></div>
 <div id="chips"></div>
-<form id="form"><input id="text" placeholder="ミケに話しかけてみよう" autocomplete="off"><button>送信</button></form>
+<form id="form"><input id="text" placeholder="チャチャに話しかけてみよう" autocomplete="off"><button>送信</button></form>
 <script>
 const pick = a => a[Math.floor(Math.random() * a.length)];
 // キャラクター: 選ぶと会話の口調・見た目・声の初期設定が切り替わる
 const chars = {
-  "ミケ": {
-    sub: "気まぐれな三毛猫。天気とニュースも教えてくれる", preset: "ふつうの猫", tint: "none",
-    hello: "にゃーん。ミケだにゃ。\n話しかけてもいいし、「名古屋の天気は？」「ニュース教えて」と聞いてもいいにゃ。",
-    topics: [
-      [/こんにちは|こんばんは|おはよ|やあ|はじめまして/, ["にゃーん。ミケだにゃ。よろしくにゃ。", "来たにゃ？ちょうど暇してたにゃ。"]],
-      [/名前/, ["ミケにゃ。三毛猫だからミケにゃ。そのまんまにゃ。"]],
-      [/ごはん|おなか|お腹|おやつ|ちゅ〜る|ちゅーる/, ["ごはん！？すぐ持ってきてにゃ！", "ちゅ〜るがいいにゃ。ちゅ〜るをよこすにゃ。"]],
-      [/あそ|遊/, ["ねこじゃらしで遊ぶにゃ！ほら、振るにゃ！", "遊んでやってもいいにゃ。ちょっとだけにゃ。"]],
-      [/ねむ|眠|寝|おやすみ/, ["ふぁ〜…日なたでひと眠りするにゃ。", "おやすみにゃ…ごろごろ…"]],
-      [/かわいい|好き|だいすき|大好き/, ["にゃっ…べ、別に嬉しくないにゃ。でも喉は鳴るにゃ。ごろごろ", "知ってるにゃ。もっと言うにゃ。"]],
-      [/なでなで|撫|さわ/, ["あごの下ならいいにゃ。ごろごろ…", "しっぽは触っちゃだめにゃ！"]],
-      [/犬|いぬ|イヌ/, ["犬は元気すぎて苦手にゃ。でも嫌いじゃないにゃ。"]],
-      [/ありがと/, ["どういたしましてにゃ。次はおやつをよこすにゃ。"]],
-      [/ばいばい|バイバイ|またね|さようなら/, ["またにゃ。気が向いたらまた来るにゃ。"]],
-    ],
-    fallback: ["にゃ〜？よく分からないけど、ごろごろ。", "ふーん、そうなのかにゃ。", "むにゃ…今ちょっと毛づくろい中にゃ。", "天気かニュースなら教えられるにゃ。", "にゃ！？なんでもないにゃ。"],
-  },
   "チャチャ": {
-    sub: "おっとり甘えん坊の猫。ゆっくりお話しするよ", preset: "おっとり猫", tint: "hue-rotate(-15deg) saturate(1.3) brightness(1.05)",
+    sub: "おっとり甘えん坊の猫。ゆっくりお話しするよ", preset: "おっとり猫", tint: "none",
     hello: "にゃぁん…チャチャだよぉ。\nお話しできてうれしいにゃん。天気やニュースも聞いてほしいにゃん。",
     topics: [
       [/こんにちは|こんばんは|おはよ|やあ|はじめまして/, ["にゃぁん、いらっしゃいにゃん。待ってたよぉ。", "わぁ、来てくれたにゃん。うれしいにゃぁ。"]],
@@ -81,7 +64,7 @@ const chars = {
     fallback: ["にゃぁ？もう一回ゆっくり教えてにゃん。", "そうなんだぁ、すごいにゃん。", "ふわぁ…ちょっとぼーっとしてたにゃぁ。", "天気かニュースなら、がんばって調べるにゃん。", "うにゃ〜、むずかしいにゃぁ。"],
   },
 };
-let C = chars["ミケ"];
+let C = chars["チャチャ"];
 const WMO = { 0: "快晴☀️", 1: "晴れ🌤️", 2: "くもり時々晴れ⛅", 3: "くもり☁️", 45: "霧🌫️", 48: "霧🌫️", 51: "弱い霧雨🌦️", 53: "霧雨🌦️", 55: "強い霧雨🌧️", 61: "弱い雨🌧️", 63: "雨🌧️", 65: "強い雨🌧️", 71: "弱い雪🌨️", 73: "雪🌨️", 75: "大雪❄️", 80: "にわか雨🌦️", 81: "にわか雨🌦️", 82: "激しいにわか雨⛈️", 95: "雷雨⛈️", 96: "雷雨⛈️", 99: "雷雨⛈️" };
 const NEWS_RSS = "https://www3.nhk.or.jp/rss/news/cat0.xml";
 
@@ -222,13 +205,6 @@ document.getElementById("form").onsubmit = e => {
 const chips = document.getElementById("chips");
 function renderChips() {
   chips.innerHTML = "";
-  Object.keys(chars).filter(k => chars[k] !== C).forEach(k => {
-    const b = document.createElement("button");
-    b.textContent = "🐱 " + k + (k === "チャチャ" ? "さん" : "") + "と話す";
-    b.style.fontWeight = "bold";
-    b.onclick = () => { whoSel.value = k; selectChar(k, true); };
-    chips.append(b);
-  });
   ["名古屋の天気は？", "ニュース教えて", "ごはん食べる？", "なでなで"].forEach(s => {
     const b = document.createElement("button");
     b.textContent = s; b.onclick = () => send(s);
@@ -236,8 +212,6 @@ function renderChips() {
   });
 }
 // キャラを選ぶ: 口調・見た目・声を切り替え、猫の声(ON)であいさつする
-const whoSel = document.getElementById("who");
-Object.keys(chars).forEach(k => whoSel.add(new Option(k, k)));
 function selectChar(name, greetAloud) {
   C = chars[name];
   document.documentElement.style.setProperty("--tint", C.tint);
@@ -254,8 +228,7 @@ function selectChar(name, greetAloud) {
     speak(C.hello);
   }
 }
-whoSel.onchange = () => selectChar(whoSel.value, true);
-selectChar("ミケ", false);
+selectChar("チャチャ", false);
 </script>
 </body>
 </html>
