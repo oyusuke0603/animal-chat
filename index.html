@@ -21,6 +21,7 @@
   .msg { max-width: 75%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; }
   .me .msg { background: #cfe8ff; }
   .bot .msg { background: #fff; }
+  .msg img, .msg video { max-width: 100%; border-radius: 10px; display: block; margin-top: 6px; }
   .msg a { color: #0b57d0; display: block; margin: 4px 0; }
   #chips { padding: 0 12px; display: flex; gap: 6px; flex-wrap: wrap; }
   #chips button { border: 1px solid #ffb347; background: #fff; border-radius: 14px; padding: 4px 10px; cursor: pointer; }
@@ -118,10 +119,29 @@ async function getNews() {
   return nodes;
 }
 
+// 写真・動画: PHOTOS に "photos/1.jpg" や "photos/1.mp4" を入れるとランダム表示。空ならアルバムを開くリンクを出す
+const ALBUM_URL = "https://photos.google.com/album/AF1QipPuKnyrMFOvBro3aoaNTyD_LjYnrjf9dM76yoNx";
+const PHOTOS = [];
+function getPhoto() {
+  const nodes = [document.createTextNode(pick(["写真を見せてあげるにゃん。", "とっておきを出すにゃぁ。", "ゆっくり見てにゃん。"]))];
+  if (PHOTOS.length) {
+    const src = pick(PHOTOS), v = /\.(mp4|webm|mov)$/i.test(src);
+    const el = document.createElement(v ? "video" : "img");
+    el.src = src; if (v) el.controls = true;
+    nodes.push(el);
+  } else {
+    const a = document.createElement("a");
+    a.href = ALBUM_URL; a.target = "_blank"; a.rel = "noopener"; a.textContent = "📷 アルバムを開く";
+    nodes.push(a);
+  }
+  return nodes;
+}
+
 async function reply(input) {
   try {
     if (input.includes("天気")) return await getWeather(input);
     if (/ニュース|news/i.test(input)) return await getNews();
+    if (/写真|動画|しゃしん|どうが|アルバム/.test(input)) return getPhoto();
   } catch (e) {
     return "うまく取得できなかったにゃ…あとでもう一度ためしてにゃ。";
   }
@@ -220,7 +240,7 @@ document.getElementById("form").onsubmit = e => {
 const chips = document.getElementById("chips");
 function renderChips() {
   chips.innerHTML = "";
-  ["名古屋の天気は？", "ニュース教えて", "ごはん食べる？", "なでなで"].forEach(s => {
+  ["写真（動画）見たい", "名古屋の天気は？", "ニュース教えて", "ごはん食べる？", "なでなで"].forEach(s => {
     const b = document.createElement("button");
     b.textContent = s; b.onclick = () => send(s);
     chips.append(b);
