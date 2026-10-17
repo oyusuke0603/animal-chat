@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ねこチャット</title>
+<style>
+  body { font-family: sans-serif; background: #fff8e7; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+  header { background: #ffb347; padding: 12px; text-align: center; font-weight: bold; }
+  header small { display: block; font-weight: normal; font-size: .75rem; }
+  #stage { text-align: center; background: #ffe9b8; padding: 4px 0; }
+  #stage img { filter: var(--tint, none); height: 170px; animation: breathe 3s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes breathe { 50% { transform: scale(1.02, .98); } }
+  #stage.talk img { animation: bounce .35s ease-in-out infinite; }
+  @keyframes bounce { 50% { transform: translateY(-6px) rotate(-2deg); } }
+  #controls { padding: 6px 12px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: .85rem; }
+  #log { flex: 1; overflow-y: auto; padding: 12px; }
+  .row { display: flex; align-items: flex-end; gap: 6px; margin: 6px 0; }
+  .row.me { justify-content: flex-end; }
+  .icon { filter: var(--tint, none); width: 36px; height: 36px; flex: none; border-radius: 50%; background: #ffe9b8 url(cat.png) 2% 9% / 260% auto; }
+  .msg { max-width: 75%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; }
+  .me .msg { background: #cfe8ff; }
+  .bot .msg { background: #fff; }
+  .msg a { color: #0b57d0; display: block; margin: 4px 0; }
+  #chips { padding: 0 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  #chips button { border: 1px solid #ffb347; background: #fff; border-radius: 14px; padding: 4px 10px; cursor: pointer; }
+  form { display: flex; gap: 8px; padding: 12px; }
+  input { flex: 1; font-size: 1rem; padding: 8px; }
+</style>
+</head>
+<body>
+<header>🐱 <select id="who"></select><small id="sub"></small></header>
+<div id="stage">
+<img id="cat" src="cat.png" alt="ミケ">
+</div>
+<div id="controls">
+  声: <select id="preset"></select>
+  <select id="voicePick"></select>
+  <button id="test" type="button">▶ 試し聞き</button>
+  <button id="voice" type="button">🔇 声 OFF</button>
+</div>
+<div id="log"></div>
+<div id="chips"></div>
+<form id="form"><input id="text" placeholder="ミケに話しかけてみよう" autocomplete="off"><button>送信</button></form>
+<script>
+const pick = a => a[Math.floor(Math.random() * a.length)];
+// キャラクター: 選ぶと会話の口調・見た目・声の初期設定が切り替わる
+const chars = {
+  "ミケ": {
+    sub: "気まぐれな三毛猫。天気とニュースも教えてくれる", preset: "ふつうの猫", tint: "none",
+    hello: "にゃーん。ミケだにゃ。\n話しかけてもいいし、「名古屋の天気は？」「ニュース教えて」と聞いてもいいにゃ。",
+    topics: [
+      [/こんにちは|こんばんは|おはよ|やあ|はじめまして/, ["にゃーん。ミケだにゃ。よろしくにゃ。", "来たにゃ？ちょうど暇してたにゃ。"]],
+      [/名前/, ["ミケにゃ。三毛猫だからミケにゃ。そのまんまにゃ。"]],
+      [/ごはん|おなか|お腹|おやつ|ちゅ〜る|ちゅーる/, ["ごはん！？すぐ持ってきてにゃ！", "ちゅ〜るがいいにゃ。ちゅ〜るをよこすにゃ。"]],
+      [/あそ|遊/, ["ねこじゃらしで遊ぶにゃ！ほら、振るにゃ！", "遊んでやってもいいにゃ。ちょっとだけにゃ。"]],
+      [/ねむ|眠|寝|おやすみ/, ["ふぁ〜…日なたでひと眠りするにゃ。", "おやすみにゃ…ごろごろ…"]],
+      [/かわいい|好き|だいすき|大好き/, ["にゃっ…べ、別に嬉しくないにゃ。でも喉は鳴るにゃ。ごろごろ", "知ってるにゃ。もっと言うにゃ。"]],
+      [/なでなで|撫|さわ/, ["あごの下ならいいにゃ。ごろごろ…", "しっぽは触っちゃだめにゃ！"]],
+      [/犬|いぬ|イヌ/, ["犬は元気すぎて苦手にゃ。でも嫌いじゃないにゃ。"]],
+      [/ありがと/, ["どういたしましてにゃ。次はおやつをよこすにゃ。"]],
+      [/ばいばい|バイバイ|またね|さようなら/, ["またにゃ。気が向いたらまた来るにゃ。"]],
+    ],
+    fallback: ["にゃ〜？よく分からないけど、ごろごろ。", "ふーん、そうなのかにゃ。", "むにゃ…今ちょっと毛づくろい中にゃ。", "天気かニュースなら教えられるにゃ。", "にゃ！？なんでもないにゃ。"],
+  },
+  "チャチャ": {
+    sub: "おっとり甘えん坊の猫。ゆっくりお話しするよ", preset: "おっとり猫", tint: "hue-rotate(-15deg) saturate(1.3) brightness(1.05)",
+    hello: "にゃぁん…チャチャだよぉ。\nお話しできてうれしいにゃん。天気やニュースも聞いてほしいにゃん。",
+    topics: [
+      [/こんにちは|こんばんは|おはよ|やあ|はじめまして/, ["にゃぁん、いらっしゃいにゃん。待ってたよぉ。", "わぁ、来てくれたにゃん。うれしいにゃぁ。"]],
+      [/名前/, ["チャチャだにゃん。ちゃんと覚えてほしいにゃぁ。"]],
+      [/ごはん|おなか|お腹|おやつ|ちゅ〜る|ちゅーる/, ["ごはんの時間かにゃん？ちょっとだけ多めがいいにゃぁ。", "ちゅ〜る…ふぁぁ、聞いただけでよだれが出るにゃん。"]],
+      [/あそ|遊/, ["あそぶにゃん？ゆっくりなら付き合うにゃぁ。", "ひざの上で遊びたいにゃん。"]],
+      [/ねむ|眠|寝|おやすみ/, ["ふわぁ…いっしょにお昼寝するにゃん？", "おやすみなさいにゃぁ…すやすや…"]],
+      [/かわいい|好き|だいすき|大好き/, ["えへへ、うれしいにゃん。ごろごろごろ…", "チャチャも大好きだにゃぁ。"]],
+      [/なでなで|撫|さわ/, ["あぁ〜そこそこ、気持ちいいにゃん…", "もっとなでてほしいにゃぁ。"]],
+      [/犬|いぬ|イヌ/, ["わんちゃんとも仲良くなれるといいにゃん。"]],
+      [/ありがと/, ["どういたしましてにゃん。またお話ししようにゃぁ。"]],
+      [/ばいばい|バイバイ|またね|さようなら/, ["またねにゃん。さみしいけど待ってるにゃぁ。"]],
+    ],
+    fallback: ["にゃぁ？もう一回ゆっくり教えてにゃん。", "そうなんだぁ、すごいにゃん。", "ふわぁ…ちょっとぼーっとしてたにゃぁ。", "天気かニュースなら、がんばって調べるにゃん。", "うにゃ〜、むずかしいにゃぁ。"],
+  },
+};
+let C = chars["ミケ"];
+const WMO = { 0: "快晴☀️", 1: "晴れ🌤️", 2: "くもり時々晴れ⛅", 3: "くもり☁️", 45: "霧🌫️", 48: "霧🌫️", 51: "弱い霧雨🌦️", 53: "霧雨🌦️", 55: "強い霧雨🌧️", 61: "弱い雨🌧️", 63: "雨🌧️", 65: "強い雨🌧️", 71: "弱い雪🌨️", 73: "雪🌨️", 75: "大雪❄️", 80: "にわか雨🌦️", 81: "にわか雨🌦️", 82: "激しいにわか雨⛈️", 95: "雷雨⛈️", 96: "雷雨⛈️", 99: "雷雨⛈️" };
+const NEWS_RSS = "https://www3.nhk.or.jp/rss/news/cat0.xml";
+
+const log = document.getElementById("log");
+
+function add(content, who) {
+  const row = document.createElement("div");
+  row.className = "row " + who;
+  const m = document.createElement("div");
+  m.className = "msg";
+  if (typeof content === "string") m.textContent = content; else m.append(...content);
+  if (who === "bot") { const i = document.createElement("span"); i.className = "icon"; row.append(i); }
+  row.append(m);
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function getWeather(text) {
+  const m = text.match(/(.+?)の?(?:今日の|明日の)?天気/);
+  const city = (m && m[1].replace(/[、,\s]|今日|明日|教えて/g, "")) || "名古屋";
+  const g = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&language=ja&count=1`)).json();
+  if (!g.results) return `「${city}」って場所は見つからなかったにゃ…`;
+  const { latitude, longitude, name } = g.results[0];
+  const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`)).json();
+  const c = w.current, d = w.daily;
+  const rain = d.precipitation_probability_max[0];
+  return `${name}の天気は${WMO[c.weather_code] || "不明"}にゃ\n今 ${c.temperature_2m}℃（最高 ${d.temperature_2m_max[0]}℃ / 最低 ${d.temperature_2m_min[0]}℃）\n降水確率 ${rain}%\n${rain >= 50 ? "雨は嫌いにゃ。今日は家で寝るにゃ。" : "お散歩日和かもしれないにゃ。"}`;
+}
+
+async function getNews() {
+  const r = await (await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(NEWS_RSS)}`)).json();
+  if (r.status !== "ok") throw new Error("rss");
+  const nodes = [document.createTextNode("NHKのニュースを持ってきたにゃ。")];
+  r.items.slice(0, 5).forEach(i => {
+    const a = document.createElement("a");
+    a.href = i.link; a.target = "_blank"; a.rel = "noopener"; a.textContent = "・" + i.title;
+    nodes.push(a);
+  });
+  return nodes;
+}
+
+async function reply(input) {
+  try {
+    if (input.includes("天気")) return await getWeather(input);
+    if (/ニュース|news/i.test(input)) return await getNews();
+  } catch (e) {
+    return "うまく取得できなかったにゃ…あとでもう一度ためしてにゃ。";
+  }
+  for (const [re, answers] of C.topics) if (re.test(input)) return pick(answers);
+  return pick(C.fallback);
+}
+
+// 声: ブラウザ標準の音声合成を高めのピッチで猫っぽく読み上げる（無料・キー不要）
+let voiceOn = false;
+const stage = document.getElementById("stage");
+const presets = {
+  "子猫（高くて元気）": { pitch: 2, rate: 1.3 },
+  "ふつうの猫": { pitch: 1.6, rate: 1.1 },
+  "おっとり猫": { pitch: 1.4, rate: .8 },
+  "ツンデレ猫": { pitch: 1.1, rate: 1.2 },
+  "おじさん猫（低い）": { pitch: .5, rate: .9 },
+  "ひそひそ猫": { pitch: 1.8, rate: .7 },
+};
+const presetSel = document.getElementById("preset"), pickSel = document.getElementById("voicePick");
+Object.keys(presets).forEach(k => presetSel.add(new Option(k, k)));
+presetSel.value = "ふつうの猫";
+function loadVoices() {
+  const vs = speechSynthesis.getVoices().filter(v => v.lang.startsWith("ja"));
+  pickSel.innerHTML = "";
+  pickSel.add(new Option("端末の声: 自動", ""));
+  vs.forEach(v => pickSel.add(new Option(v.name, v.name)));
+}
+if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function talkFor(ms) { stage.classList.add("talk"); setTimeout(() => stage.classList.remove("talk"), ms); }
+function speak(text) {
+  const clean = text.replace(/https?:\/\/\S+/g, "");
+  if (!voiceOn || !window.speechSynthesis) return talkFor(Math.min(3000, 400 + clean.length * 80));
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(clean), p = presets[presetSel.value];
+  u.lang = "ja-JP"; u.pitch = p.pitch; u.rate = p.rate;
+  const v = speechSynthesis.getVoices().find(x => x.name === pickSel.value);
+  if (v) u.voice = v;
+  u.onstart = () => stage.classList.add("talk");
+  u.onend = u.onerror = () => stage.classList.remove("talk");
+  meow(p.pitch);
+  setTimeout(() => speechSynthesis.speak(u), 550);
+}
+// 「ニャー」音: Web Audioで合成（音源ファイル不要・著作権の心配なし）
+let actx;
+function meow(pitch) {
+  try {
+    actx = actx || new AudioContext();
+    const t = actx.currentTime, f = 480 * Math.sqrt(pitch);
+    const o = actx.createOscillator(), fl = actx.createBiquadFilter(), g = actx.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.linearRampToValueAtTime(f * 1.7, t + .18);
+    o.frequency.linearRampToValueAtTime(f * .8, t + .5);
+    fl.type = "bandpass"; fl.Q.value = 4;
+    fl.frequency.setValueAtTime(800, t);
+    fl.frequency.linearRampToValueAtTime(2200, t + .2);
+    fl.frequency.linearRampToValueAtTime(900, t + .5);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(.5, t + .06);
+    g.gain.linearRampToValueAtTime(0, t + .5);
+    o.connect(fl); fl.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + .52);
+  } catch (e) {}
+}
+// 選んだ声は次回も使う
+try { presetSel.value = localStorage.getItem("catPreset") || presetSel.value; } catch (e) {}
+function testVoice() { const was = voiceOn; voiceOn = true; speak("にゃーん。この声はどうかにゃ？"); voiceOn = was; }
+document.getElementById("test").onclick = testVoice;
+presetSel.onchange = () => { try { localStorage.setItem("catPreset", presetSel.value); } catch (e) {} testVoice(); };
+pickSel.onchange = testVoice;
+document.getElementById("voice").onclick = e => {
+  voiceOn = !voiceOn;
+  e.target.textContent = voiceOn ? "🔊 声 ON" : "🔇 声 OFF";
+  if (voiceOn) speak("にゃーん");
+  else speechSynthesis.cancel();
+};
+
+async function send(v) {
+  add(v, "me");
+  const r = await reply(v);
+  add(r, "bot");
+  speak(typeof r === "string" ? r : r[0].textContent);
+}
+
+document.getElementById("form").onsubmit = e => {
+  e.preventDefault();
+  const t = document.getElementById("text"), v = t.value.trim();
+  if (!v) return;
+  t.value = "";
+  send(v);
+};
+// クイックボタン: 他のキャラに切り替えるボタン + 話題ボタン
+const chips = document.getElementById("chips");
+function renderChips() {
+  chips.innerHTML = "";
+  Object.keys(chars).filter(k => chars[k] !== C).forEach(k => {
+    const b = document.createElement("button");
+    b.textContent = "🐱 " + k + (k === "チャチャ" ? "さん" : "") + "と話す";
+    b.style.fontWeight = "bold";
+    b.onclick = () => { whoSel.value = k; selectChar(k, true); };
+    chips.append(b);
+  });
+  ["名古屋の天気は？", "ニュース教えて", "ごはん食べる？", "なでなで"].forEach(s => {
+    const b = document.createElement("button");
+    b.textContent = s; b.onclick = () => send(s);
+    chips.append(b);
+  });
+}
+// キャラを選ぶ: 口調・見た目・声を切り替え、猫の声(ON)であいさつする
+const whoSel = document.getElementById("who");
+Object.keys(chars).forEach(k => whoSel.add(new Option(k, k)));
+function selectChar(name, greetAloud) {
+  C = chars[name];
+  document.documentElement.style.setProperty("--tint", C.tint);
+  document.getElementById("sub").textContent = C.sub;
+  document.getElementById("text").placeholder = name + "に話しかけてみよう";
+  document.getElementById("cat").alt = name;
+  presetSel.value = C.preset;
+  log.innerHTML = "";
+  renderChips();
+  add(C.hello, "bot");
+  if (greetAloud) {
+    voiceOn = true;
+    document.getElementById("voice").textContent = "🔊 声 ON";
+    speak(C.hello);
+  }
+}
+whoSel.onchange = () => selectChar(whoSel.value, true);
+selectChar("ミケ", false);
+</script>
+</body>
+</html>
