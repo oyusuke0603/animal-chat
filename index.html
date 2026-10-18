@@ -107,11 +107,21 @@ async function getWeather(text) {
   return `${name}の天気は${WMO[c.weather_code] || "不明"}にゃ\n今 ${c.temperature_2m}℃（最高 ${d.temperature_2m_max[0]}℃ / 最低 ${d.temperature_2m_min[0]}℃）\n降水確率 ${rain}%\n${rain >= 50 ? "雨は嫌いにゃ。今日は家で寝るにゃ。" : "お散歩日和かもしれないにゃ。"}`;
 }
 
-async function getNews() {
+async function fetchNewsItems() {
+  // 1) NHKのRSSを直接取得（CORS許可あり）。2) だめなら rss2json 経由
+  try {
+    const xml = new DOMParser().parseFromString(await (await fetch(NEWS_RSS)).text(), "text/xml");
+    const items = [...xml.querySelectorAll("item")].map(i => ({ title: i.querySelector("title").textContent, link: i.querySelector("link").textContent }));
+    if (items.length) return items;
+  } catch (e) {}
   const r = await (await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(NEWS_RSS)}`)).json();
   if (r.status !== "ok") throw new Error("rss");
-  const nodes = [document.createTextNode("NHKのニュースを持ってきたにゃ。")];
-  r.items.slice(0, 5).forEach(i => {
+  return r.items;
+}
+
+async function getNews() {
+  const nodes = [document.createTextNode(pick(["NHKのニュースを持ってきたにゃん。", "きょうのニュースだにゃぁ。"]))];
+  (await fetchNewsItems()).slice(0, 5).forEach(i => {
     const a = document.createElement("a");
     a.href = i.link; a.target = "_blank"; a.rel = "noopener"; a.textContent = "・" + i.title;
     nodes.push(a);
