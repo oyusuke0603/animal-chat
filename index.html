@@ -189,9 +189,15 @@ function speak(text) {
 }
 // 「ニャー」音: Web Audioで合成（音源ファイル不要・著作権の心配なし）
 let actx;
+// スマホ(特にiPhone)対策: 最初のタップで音声と効果音を「解錠」しておく
+document.addEventListener("pointerdown", () => {
+  try { actx = actx || new AudioContext(); actx.resume(); } catch (e) {}
+  try { if (window.speechSynthesis) speechSynthesis.speak(new SpeechSynthesisUtterance("")); } catch (e) {}
+}, { once: true });
 function meow(pitch) {
   try {
     actx = actx || new AudioContext();
+    if (actx.state === "suspended") actx.resume();
     const t = actx.currentTime, f = 480 * Math.sqrt(pitch);
     const o = actx.createOscillator(), fl = actx.createBiquadFilter(), g = actx.createGain();
     o.type = "sawtooth";
