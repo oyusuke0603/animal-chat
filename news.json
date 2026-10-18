@@ -1,0 +1,55 @@
+{
+    "sources":  [
+                    {
+                        "items":  [
+                                      {
+                                          "link":  "https://news.yahoo.co.jp/pickup/6599194?source=rss",
+                                          "title":  "米の対露制裁見送り ウ大統領反発"
+                                      },
+                                      {
+                                          "link":  "https://news.yahoo.co.jp/pickup/6599187?source=rss",
+                                          "title":  "通販に未認証のチャイルドシート"
+                                      },
+                                      {
+                                          "link":  "https://news.yahoo.co.jp/pickup/6599199?source=rss",
+                                          "title":  "中国人観光客 目立つ「大阪離れ」"
+                                      },
+                                      {
+                                          "link":  "https://news.yahoo.co.jp/pickup/6599192?source=rss",
+                                          "title":  "死亡事故 無車検の車運転疑い逮捕"
+                                      },
+                                      {
+                                          "link":  "https://news.yahoo.co.jp/pickup/6599195?source=rss",
+                                          "title":  "シカ衝突し停車 追突され女性死亡"
+                                      }
+                                  ],
+                        "name":  "Yahoo!ニュース 主要"
+                    },
+                    {
+                        "items":  [
+                                      {
+                                          "link":  "http://www3.nhk.or.jp/news/html/20260808/k10015199841000.html",
+                                          "title":  "台風13号 影響は長時間続く 警戒を 台風15号の動きは?"
+                                      },
+                                      {
+                                          "link":  "http://www3.nhk.or.jp/news/html/20260808/k10015200211000.html",
+                                          "title":  "北日本と東日本中心 9日も大気の状態が非常に不安定の見込み"
+                                      },
+                                      {
+                                          "link":  "http://www3.nhk.or.jp/news/html/20260808/k10015200261000.html",
+                                          "title":  "愛知県内で水難事故相次ぐ 2人死亡"
+                                      },
+                                      {
+                                          "link":  "http://www3.nhk.or.jp/news/html/20260808/k10015200121000.html",
+                                          "title":  "熊本地震 10年前の地震と隣り合う領域で発生か 専門家分析"
+                                      },
+                                      {
+                                          "link":  "http://www3.nhk.or.jp/news/html/20260808/k10015200291000.html",
+                                          "title":  "ラグビーリーグワン フィジー出身選手が死亡 熱中症疑いで搬送"
+                                      }
+                                  ],
+                        "name":  "NHKニュース"
+                    }
+                ],
+    "updated":  "2026-10-18 09:52"
+}
