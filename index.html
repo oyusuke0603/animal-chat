@@ -120,11 +120,24 @@ async function fetchNewsItems() {
 }
 
 async function getNews() {
-  const nodes = [document.createTextNode(pick(["NHKのニュースを持ってきたにゃん。", "きょうのニュースだにゃぁ。"]))];
-  (await fetchNewsItems()).slice(0, 5).forEach(i => {
-    const a = document.createElement("a");
-    a.href = i.link; a.target = "_blank"; a.rel = "noopener"; a.textContent = "・" + i.title;
-    nodes.push(a);
+  let sources;
+  try {
+    // Actionsが30分ごとに更新する news.json（Yahoo!ニュース主要 + NHK）
+    const j = await (await fetch("news.json?" + Date.now())).json();
+    sources = j.sources;
+  } catch (e) {
+    sources = [{ name: "NHKニュース", items: await fetchNewsItems() }];
+  }
+  const nodes = [document.createTextNode(pick(["ニュースを持ってきたにゃん。", "きょうのニュースだにゃぁ。"]))];
+  sources.forEach(s => {
+    const h = document.createElement("div");
+    h.textContent = "【" + s.name + "】"; h.style.cssText = "font-weight:bold;margin-top:8px";
+    nodes.push(h);
+    s.items.slice(0, 5).forEach(i => {
+      const a = document.createElement("a");
+      a.href = i.link; a.target = "_blank"; a.rel = "noopener"; a.textContent = "・" + i.title;
+      nodes.push(a);
+    });
   });
   return nodes;
 }
