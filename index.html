@@ -42,7 +42,7 @@
 </div>
 <div id="log"></div>
 <div id="chips"></div>
-<form id="form"><input id="text" placeholder="チャチャに話しかけてみよう" autocomplete="off"><button>送信</button></form>
+<form id="form"><input id="text" placeholder="チャチャに話しかけてみよう" autocomplete="off"><button type="button" id="mic" hidden>🎤</button><button>送信</button></form>
 <script>
 // 同じ配列から連続で同じ返事を選ばない
 const lastPick = new Map();
@@ -256,6 +256,21 @@ async function send(v) {
   const r = await reply(v);
   add(r, "bot");
   speak(typeof r === "string" ? r : r[0].textContent);
+}
+
+// 音声入力: ブラウザの音声認識（Android Chrome等）。マイクを押して話すと、そのまま送信される
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mic = document.getElementById("mic");
+if (SR) {
+  mic.hidden = false;
+  mic.onclick = () => {
+    const rec = new SR();
+    rec.lang = "ja-JP"; rec.interimResults = false;
+    mic.textContent = "👂";
+    rec.onresult = e => send(e.results[0][0].transcript);
+    rec.onend = rec.onerror = () => { mic.textContent = "🎤"; };
+    rec.start();
+  };
 }
 
 document.getElementById("form").onsubmit = e => {
