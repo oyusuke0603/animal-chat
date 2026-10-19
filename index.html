@@ -23,6 +23,11 @@
   .bot .msg { background: #fff; }
   .msg img, .msg video { max-width: 100%; border-radius: 10px; display: block; margin-top: 6px; }
   .msg a { color: #0b57d0; display: block; margin: 4px 0; }
+  .msg button { margin: 6px 6px 0 0; padding: 6px 12px; border: 1px solid #ffb347; background: #fff8e7; border-radius: 12px; cursor: pointer; font-size: .95rem; }
+  .msg button:disabled { opacity: .5; cursor: default; }
+  #stage { position: relative; }
+  #toy { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd1e0, #ff6fa0); border: 0; padding: 0; transition: left .35s, top .35s; box-shadow: 0 2px 6px #0003; }
+  #toyScore { position: absolute; right: 10px; top: 6px; font-weight: bold; }
   #chips { padding: 0 12px; display: flex; gap: 6px; flex-wrap: wrap; }
   #chips button { border: 1px solid #ffb347; background: #fff; border-radius: 14px; padding: 4px 10px; cursor: pointer; }
   form { display: flex; gap: 8px; padding: 12px; }
@@ -160,6 +165,116 @@ function getPhoto() {
   return nodes;
 }
 
+// ---------- 時間帯・天気のあいさつ ----------
+async function greetExtra() {
+  const h = new Date().getHours();
+  const timeLine = h < 5 ? "もう寝る時間だにゃぁ…夜ふかしさんだにゃん。" : h < 11 ? "おはようにゃん。朝ごはんは食べたかにゃぁ？" : h < 17 ? "こんにちはにゃん。ひなたぼっこ日和かにゃぁ。" : h < 22 ? "こんばんはにゃん。きょうもおつかれさまにゃぁ。" : "もうおそい時間だにゃぁ。そろそろ寝るにゃん？";
+  add(timeLine, "bot");
+  try {
+    const w = await (await fetch("https://api.open-meteo.com/v1/forecast?latitude=35.18&longitude=136.91&current=temperature_2m,weather_code&timezone=auto")).json();
+    const c = w.current.weather_code, T = w.current.temperature_2m;
+    const rain = (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95, snow = (c >= 71 && c <= 77) || c === 85 || c === 86;
+    const line = rain ? "名古屋は雨だにゃぁ…ぽつぽつ音がするにゃん。お出かけなら傘を持ってにゃ。" : snow ? "名古屋は雪だにゃん！こたつで丸くなりたいにゃぁ。" : T >= 30 ? `名古屋は${T}℃のあつさだにゃぁ。お水をいっぱい飲んでにゃん。` : T <= 5 ? `名古屋は${T}℃で寒いにゃん。あったかくしてにゃぁ。` : c <= 1 ? "名古屋は晴れてるにゃん。お散歩したくなるにゃぁ。" : "名古屋はおだやかな空だにゃぁ。";
+    add(line, "bot");
+  } catch (e) {}
+}
+
+// ---------- おみくじ ----------
+const luckyItems = ["ちゅ〜る", "ねこじゃらし", "ひなたぼっこ", "あたたかいお茶", "青いもの", "お気に入りのクッション", "いつもと違う道", "ぬいぐるみ"];
+const fortunes = [
+  ["大吉", "今日はすごくいい日になるにゃん！やりたいことをやるにゃぁ。"],
+  ["大吉", "きっといいことがあるにゃん。チャチャが保証するにゃぁ。"],
+  ["中吉", "ゆっくり進めばだいじょうぶにゃん。"],
+  ["中吉", "ちいさな幸せが見つかる日だにゃぁ。"],
+  ["小吉", "ひと休みすると、いい考えがうかぶにゃん。"],
+  ["小吉", "だれかにありがとうを言うと、運が上がるにゃぁ。"],
+  ["吉", "ふつうがいちばんだにゃん。ごはんをおいしく食べるにゃぁ。"],
+  ["末吉", "あせらなければ、あとからいいことがあるにゃん。"],
+  ["凶", "きょうはむりしないでにゃぁ…でも、あしたはきっと上向きにゃん。"],
+];
+function getOmikuji() {
+  const [r, m] = pick(fortunes);
+  return `おみくじをひくにゃん…ころころ…\n【${r}】\n${m}\nラッキーアイテム: ${pick(luckyItems)}`;
+}
+
+// ---------- じゃんけん ----------
+const hands = ["グー", "チョキ", "パー"];
+let jankenOn = false;
+function jankenResult(me) {
+  const cat = pick(hands), d = (hands.indexOf(me) - hands.indexOf(cat) + 3) % 3;
+  const res = d === 0 ? "あいこだにゃん！" : d === 1 ? "チャチャの負けだにゃぁ…くやしいにゃん。" : "チャチャの勝ちだにゃん！えへへ。";
+  return `ぽん！チャチャは${cat}にゃん。\n${res}`;
+}
+function jankenStart() {
+  jankenOn = true;
+  const nodes = [document.createTextNode("じゃんけんするにゃん！なにを出すにゃぁ？")];
+  hands.forEach(h => {
+    const b = document.createElement("button");
+    b.textContent = h;
+    b.onclick = () => { add(h, "me"); const r = jankenResult(h); add(r, "bot"); speak(r); };
+    nodes.push(b);
+  });
+  return nodes;
+}
+
+// ---------- 猫の豆知識クイズ ----------
+const quizzes = [
+  ["猫が1日に寝る時間は、どれくらい？", ["3〜5時間", "12〜16時間", "20時間以上"], 1, "猫は1日の半分以上、12〜16時間も寝るにゃん。"],
+  ["猫が汗をかく場所は、主にどこ？", ["肉球", "おなか", "しっぽ"], 0, "猫は肉球から汗をかくにゃん。緊張すると肉球がしっとりするにゃぁ。"],
+  ["猫のひげの大切な役割は？", ["おしゃれ", "すき間の幅などを測るセンサー", "ごはんの味を見る"], 1, "ひげは、通れる幅を測ったり空気の動きを感じたりするセンサーだにゃん。"],
+  ["猫が苦手と言われるにおいは？", ["かつおぶし", "柑橘（みかん・レモン）系", "お日さまのにおい"], 1, "柑橘系のにおいは苦手な子が多いにゃぁ。"],
+  ["猫の舌がザラザラしている理由は？", ["毛づくろいや食事に便利だから", "味がしないから", "冷たいものを好むから"], 0, "ザラザラの舌は、毛づくろいや骨から肉をこそげるのに役立つにゃん。"],
+  ["猫は、どの味を感じにくい？", ["甘味", "塩味", "苦味"], 0, "猫は甘味を感じにくいと言われているにゃん。だからケーキはあまり好きじゃないにゃぁ。"],
+  ["三毛猫のほとんどは、オス？メス？", ["オス", "メス", "半々"], 1, "三毛猫のほとんどはメスだにゃん。オスはとてもめずらしいにゃぁ。"],
+  ["猫がしっぽをぴんと立てて近づいてきたら？", ["おこっている", "あいさつ・親愛のサイン", "おなかが痛い"], 1, "しっぽを立てるのは「だいすき」「こんにちは」のサインだにゃん。"],
+  ["大人の猫の歯は、全部で何本？", ["14本", "30本", "50本"], 1, "大人の猫の歯は30本だにゃん。子猫のときは26本にゃぁ。"],
+];
+let lastQuiz = -1;
+function quizStart() {
+  let i; do i = Math.floor(Math.random() * quizzes.length); while (i === lastQuiz && quizzes.length > 1);
+  lastQuiz = i;
+  const [q, ch, ans, ex] = quizzes[i];
+  const nodes = [document.createTextNode("豆知識クイズにゃん！\n" + q)];
+  const btns = [];
+  ch.forEach((c, k) => {
+    const b = document.createElement("button");
+    b.textContent = c;
+    b.onclick = () => {
+      btns.forEach(x => x.disabled = true);
+      add(c, "me");
+      const r = (k === ans ? "せいかいにゃん！すごいにゃぁ。\n" : "ざんねん…こたえは「" + ch[ans] + "」だにゃん。\n") + ex;
+      add(r, "bot"); speak(r);
+    };
+    btns.push(b); nodes.push(b);
+  });
+  return nodes;
+}
+
+// ---------- ねこじゃらしゲーム ----------
+let toyOn = false;
+function toyStart() {
+  if (toyOn) return "もう遊んでるにゃん！おもちゃをタップにゃぁ。";
+  toyOn = true;
+  const GOAL = 10, t0 = Date.now();
+  let n = 0;
+  const score = document.createElement("div"); score.id = "toyScore"; score.textContent = `0 / ${GOAL}`;
+  const toy = document.createElement("button"); toy.id = "toy"; toy.setAttribute("aria-label", "ねこじゃらし");
+  stage.append(score, toy);
+  const move = () => { toy.style.left = Math.random() * (stage.clientWidth - 50) + "px"; toy.style.top = Math.random() * (stage.clientHeight - 50) + "px"; };
+  move();
+  const timer = setInterval(move, 900);
+  toy.onclick = () => {
+    n++; score.textContent = `${n} / ${GOAL}`; meow(1.6); talkFor(300); move();
+    if (n >= GOAL) {
+      clearInterval(timer); toy.remove(); score.remove(); toyOn = false;
+      const sec = ((Date.now() - t0) / 1000).toFixed(1);
+      const r = `つかまえたにゃん！${sec}秒だったにゃぁ。\nたのしかったにゃん。もう一回やるにゃ？`;
+      add(r, "bot"); speak(r);
+    }
+  };
+  return "ねこじゃらしで遊ぶにゃん！画面の上のピンクのおもちゃを、10回タップしてにゃぁ。";
+}
+
 async function reply(input) {
   try {
     if (input.includes("天気")) return await getWeather(input);
@@ -168,6 +283,11 @@ async function reply(input) {
   } catch (e) {
     return "うまく取得できなかったにゃ…あとでもう一度ためしてにゃ。";
   }
+  if (/おみくじ|運勢|占い|うらない/.test(input)) return getOmikuji();
+  if (/じゃんけん|ジャンケン/.test(input)) return jankenStart();
+  if (jankenOn && /^(グー|ぐー|チョキ|ちょき|パー|ぱー)$/.test(input.trim())) return jankenResult(input.trim().replace("ぐー", "グー").replace("ちょき", "チョキ").replace("ぱー", "パー"));
+  if (/クイズ|豆知識|まめちしき/.test(input)) return quizStart();
+  if (/ねこじゃらし|猫じゃらし/.test(input)) return toyStart();
   // 「〇〇ちゃん元気」「〇〇げんき」→ 名前入りでランダムに返す
   const g = input.match(/^(.{1,8}?(?:ちゃん|くん|さん)?)(?:は|が)?(?:元気|げんき)/);
   if (g) return (pick(C.genki[0]) + pick(C.genki[1])).replace("{n}", g[1]);
@@ -284,7 +404,7 @@ document.getElementById("form").onsubmit = e => {
 const chips = document.getElementById("chips");
 function renderChips() {
   chips.innerHTML = "";
-  ["写真（動画）見たい", "名古屋の天気は？", "ニュース教えて", "ごはん食べる？", "なでなで"].forEach(s => {
+  ["おみくじ", "じゃんけん", "ねこじゃらし", "猫のクイズ", "写真（動画）見たい", "名古屋の天気は？", "ニュース教えて", "ごはん食べる？", "なでなで"].forEach(s => {
     const b = document.createElement("button");
     b.textContent = s; b.onclick = () => send(s);
     chips.append(b);
@@ -301,6 +421,7 @@ function selectChar(name, greetAloud) {
   log.innerHTML = "";
   renderChips();
   add(C.hello, "bot");
+  greetExtra();
   if (greetAloud) {
     voiceOn = true;
     document.getElementById("voice").textContent = "🔊 声 ON";
