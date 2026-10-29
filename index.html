@@ -321,6 +321,7 @@ function talkFor(ms) { stage.classList.add("talk"); setTimeout(() => stage.class
 function forSpeech(s) {
   return s
     .replace(/https?:\/\/\S+/g, "")
+    .replace(/日和/g, "ひより").replace(/末吉/g, "すえきち").replace(/(?<![大中小末])吉/g, "きち")
     .replace(/[\p{Extended_Pictographic}️‍]/gu, "")
     .replace(/(^|[^\d])[-−](\d)/g, "$1マイナス$2")
     .replace(/℃/g, "度")
