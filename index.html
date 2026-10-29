@@ -317,8 +317,24 @@ function loadVoices() {
 }
 if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 function talkFor(ms) { stage.classList.add("talk"); setTimeout(() => stage.classList.remove("talk"), ms); }
+// 読み上げ用に整形: 絵文字・記号・単位を、音声エンジンが正しく読める言葉にする
+function forSpeech(s) {
+  return s
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[\p{Extended_Pictographic}️‍]/gu, "")
+    .replace(/(^|[^\d])[-−](\d)/g, "$1マイナス$2")
+    .replace(/℃/g, "度")
+    .replace(/%|％/g, "パーセント")
+    .replace(/[（(]/g, "、").replace(/[）)]/g, "、")
+    .replace(/[【】]/g, "")
+    .replace(/[\/・]/g, "、")
+    .replace(/\n+/g, "。")
+    .replace(/[ 　]+/g, "、")
+    .replace(/、{2,}/g, "、")
+    .replace(/。、/g, "。").replace(/、。/g, "。");
+}
 function speak(text) {
-  const clean = text.replace(/https?:\/\/\S+/g, "");
+  const clean = forSpeech(text);
   if (!voiceOn || !window.speechSynthesis) return talkFor(Math.min(3000, 400 + clean.length * 80));
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(clean), p = presets[presetSel.value];
