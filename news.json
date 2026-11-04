@@ -1,9 +1,13 @@
 {
- "updated": "2026-11-05 01:01",
+ "updated": "2026-11-05 07:04",
  "sources": [
   {
    "name": "Yahoo!ニュース 主要",
    "items": [
+    {
+     "title": "関東や伊豆諸島 大雨災害に警戒",
+     "link": "https://news.yahoo.co.jp/pickup/6601367?source=rss"
+    },
     {
      "title": "米中間選挙 日本政府は動向注視",
      "link": "https://news.yahoo.co.jp/pickup/6601362?source=rss"
@@ -11,10 +15,6 @@
     {
      "title": "リニア工事費 再び増額へ検討",
      "link": "https://news.yahoo.co.jp/pickup/6601365?source=rss"
-    },
-    {
-     "title": "関東 5日は滝のような雨降る所も",
-     "link": "https://news.yahoo.co.jp/pickup/6601351?source=rss"
     },
     {
      "title": "児童婚増えるガザ 壮絶性暴力訴え",
