@@ -1,20 +1,16 @@
 {
- "updated": "2026-11-23 01:57",
+ "updated": "2026-11-23 07:23",
  "sources": [
   {
    "name": "Yahoo!ニュース 主要",
    "items": [
     {
-     "title": "COP31合意採択断念 EUなど反対",
-     "link": "https://news.yahoo.co.jp/pickup/6603603?source=rss"
+     "title": "COP31 合意文書採択できず閉幕",
+     "link": "https://news.yahoo.co.jp/pickup/6603614?source=rss"
     },
     {
      "title": "文科相の「交代示唆」木原氏否定",
      "link": "https://news.yahoo.co.jp/pickup/6603601?source=rss"
-    },
-    {
-     "title": "参政党が首長選に積極擁立 狙い",
-     "link": "https://news.yahoo.co.jp/pickup/6603611?source=rss"
     },
     {
      "title": "社員を監禁疑い 社長ら4人逮捕",
@@ -23,6 +19,10 @@
     {
      "title": "アンソロピックIPO巡り銀行に制約",
      "link": "https://news.yahoo.co.jp/pickup/6603609?source=rss"
+    },
+    {
+     "title": "たまごっち30周年「復活」の歴史",
+     "link": "https://news.yahoo.co.jp/pickup/6603615?source=rss"
     }
    ]
   },
